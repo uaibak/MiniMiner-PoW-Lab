@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Benchmark from './pages/Benchmark';
 import Dashboard from './pages/Dashboard';
@@ -29,7 +30,9 @@ export default function App() {
       <Navbar activePage={activePage} onNavigate={setActivePage} />
       <main className="min-w-0 flex-1">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <Page onNavigate={setActivePage} />
+          <ErrorBoundary key={activePage} onReset={() => setActivePage('dashboard')}>
+            <Page onNavigate={setActivePage} />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

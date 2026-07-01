@@ -1,17 +1,32 @@
 import { useMemo, useState } from 'react';
+import { Wallet } from 'lucide-react';
+import EmptyState from '../components/EmptyState';
 import WalletCard from '../components/WalletCard';
 import { calculateBalances } from '../core/blockchain';
 import { useMinerStore } from '../store/useMinerStore';
 
-export default function Wallets() {
+export default function Wallets({ onNavigate }) {
   const wallets = useMinerStore((state) => state.wallets);
   const chain = useMinerStore((state) => state.chain);
   const pendingTransactions = useMinerStore((state) => state.pendingTransactions);
+  const latestMiningResult = useMinerStore((state) => state.latestMiningResult);
   const createWallet = useMinerStore((state) => state.createWallet);
   const balances = useMemo(
     () => calculateBalances(chain, pendingTransactions),
     [chain, pendingTransactions],
   );
+  const realWallets = wallets.filter((wallet) => wallet.address !== 'SYSTEM');
+  const pendingOutgoingByWallet = useMemo(() => {
+    const totals = {};
+    for (const transaction of pendingTransactions) {
+      if (transaction.from === 'SYSTEM') continue;
+      totals[transaction.from] = (totals[transaction.from] || 0) + Number(transaction.amount || 0);
+    }
+    return totals;
+  }, [pendingTransactions]);
+  const latestMinedBlock = latestMiningResult?.blockIndex
+    ? chain.find((block) => block.index === latestMiningResult.blockIndex)
+    : null;
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
 
@@ -50,9 +65,35 @@ export default function Wallets() {
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {wallets.map((wallet) => (
-          <WalletCard key={wallet.id} wallet={wallet} balance={balances[wallet.address] || 0} />
+          <WalletCard
+            key={wallet.id}
+            wallet={wallet}
+            balance={balances[wallet.address] || 0}
+            pendingOutgoing={pendingOutgoingByWallet[wallet.address] || 0}
+            isLastMiner={latestMinedBlock?.minerAddress === wallet.address}
+          />
         ))}
       </div>
+
+      {realWallets.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState
+            icon={Wallet}
+            title="No normal wallets yet"
+            message="Create a wallet above, then use it on the Mine page to receive the first reward block."
+          />
+        </div>
+      ) : realWallets.length === 1 ? (
+        <div className="mt-6">
+          <EmptyState
+            icon={Wallet}
+            title="Create a second wallet when you are ready"
+            message="Two wallets let you send coins, watch pending transactions, and confirm them by mining another block."
+            actionLabel="Mine First Reward"
+            onAction={() => onNavigate('mine')}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

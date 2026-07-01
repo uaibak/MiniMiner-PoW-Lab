@@ -1,5 +1,7 @@
 node_modules/
 dist/
+.emscripten-cache/
+.emscripten-config
 .DS_Store
 *.log
 .env

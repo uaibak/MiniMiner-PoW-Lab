@@ -1,16 +1,24 @@
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import EmptyState from '../components/EmptyState';
 import { runBenchmark as runBenchmarkCore } from '../core/miner';
 import { formatNumber } from '../utils/format';
+import { BarChart3 } from 'lucide-react';
 
 export default function Benchmark() {
   const [results, setResults] = useState([]);
   const [running, setRunning] = useState(false);
+  const [currentDifficulty, setCurrentDifficulty] = useState(null);
 
   async function runBenchmark() {
     setRunning(true);
     setResults([]);
-    await runBenchmarkCore(setResults);
+    setCurrentDifficulty(2);
+    await runBenchmarkCore((nextResults) => {
+      setResults(nextResults);
+      setCurrentDifficulty(nextResults.length < 4 ? nextResults[nextResults.length - 1].difficulty + 1 : null);
+    });
+    setCurrentDifficulty(null);
     setRunning(false);
   }
 
@@ -20,6 +28,11 @@ export default function Benchmark() {
         <div>
           <h1 className="text-3xl font-bold tracking-normal text-slate-950">Benchmark</h1>
           <p className="mt-2 text-slate-600">Mine dummy blocks at difficulty 2, 3, 4, and 5 to compare performance.</p>
+          {running ? (
+            <p className="mt-2 text-sm font-medium text-slate-700">
+              Running difficulty {currentDifficulty || 'finalizing'} on this browser and device.
+            </p>
+          ) : null}
         </div>
         <button
           type="button"
@@ -44,11 +57,17 @@ export default function Benchmark() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-full items-center justify-center text-slate-500">
-              Benchmark results will appear here.
-            </div>
+            <EmptyState
+              icon={BarChart3}
+              title="No benchmark yet"
+              message="Run the benchmark to compare how difficulty changes attempts, time, and hash rate on this device."
+            />
           )}
         </div>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+        Benchmark results vary by browser, device load, JavaScript engine, and whether the C++ WebAssembly miner is available.
       </div>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">

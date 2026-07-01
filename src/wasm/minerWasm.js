@@ -54,6 +54,8 @@ async function loadWasmModule() {
       throw new Error('MiniMiner WASM exports are incomplete.');
     }
 
+    exports._initialize?.();
+
     return exports;
   })();
 

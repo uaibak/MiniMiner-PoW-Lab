@@ -35,6 +35,24 @@ npm run build
 npm run preview
 ```
 
+## Tests
+
+Run the core simulator test suite:
+
+```bash
+npm run test
+```
+
+The current tests cover:
+
+- valid genesis chain creation
+- JavaScript Proof-of-Work mining
+- reward transactions
+- derived balances
+- pending outgoing balance checks
+- tamper detection
+- negative-balance validation failures
+
 ## C++ WebAssembly Miner
 
 The app works immediately with the JavaScript miner. A C++ mining engine is also included in `src/wasm/miniminer.cpp`.
@@ -58,6 +76,13 @@ The build script writes:
 
 ```text
 public/wasm/miniminer.wasm
+```
+
+The script uses a project-local Emscripten cache so Homebrew's install directory does not need to be writable:
+
+```text
+.emscripten-cache/
+.emscripten-config
 ```
 
 When that file exists, the app attempts to use the C++ WebAssembly miner through `src/wasm/minerWasm.js`. If the binary is missing or cannot load, the app falls back to the JavaScript miner automatically.
@@ -515,7 +540,7 @@ The C++ miner mines bounded batches instead of running forever. JavaScript remai
 
 ### `src/wasm/minerWasm.js`
 
-Loads `public/wasm/miniminer.wasm`, passes block payloads into WebAssembly memory, calls the C++ batch miner, and returns results in the same shape as the JavaScript miner.
+Loads `public/wasm/miniminer.wasm`, initializes the module, passes block payloads into WebAssembly memory, calls the C++ batch miner, and returns results in the same shape as the JavaScript miner.
 
 ### `scripts/build-wasm.sh`
 
@@ -524,6 +549,8 @@ Compiles the C++ source with Emscripten:
 ```bash
 npm run wasm:build
 ```
+
+The script prefers Homebrew's Python and bundled Emscripten LLVM/Binaryen tools when available.
 
 ## Common Workflow
 
